@@ -7,16 +7,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Lasso, ElasticNet
 from sklearn.linear_model import Lasso
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 
-def Regression(X_train, y_train, X_test, y_test, reg_type='Ridge', coefs=False, alpha_list = [1.0, 1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5], ReturnBestAlpha=False, cvfolds=2, normalize=False, sample_weight=None):
+def Regression(X_train, y_train, X_test, y_test, reg_type='Ridge', coefs=False, alpha_list = [1.0, 1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5], ReturnBestAlpha=False, cvfolds=2, normalize=False, sample_weight=None, n_jobs=1):
     """ Does the regression part based on X_train and y_train 
     and returns predicted y for X_test
-    Choose type of regression,  eg. 'Ridge' or 'Lasso' or 'RandomForest' """
+    Choose type of regression,  eg. 'Ridge' or 'Lasso' or 'ElasticNet'
+    Other parameters: number of times to do cross-validation, whether to normalise, """
     # Define parameters for the regression model for Ridge or
     # Lasso to train for different regularisation parameters alpha
     N, p = X_train.shape
@@ -28,29 +29,18 @@ def Regression(X_train, y_train, X_test, y_test, reg_type='Ridge', coefs=False, 
                 'normalize':[normalize] }
 
     if reg_type == 'Ridge':
-        regr = GridSearchCV(Ridge(), parameters, cv=cvfolds, n_jobs=1, refit=True,
-                            scoring='neg_mean_squared_error')
-        regr.fit(X_train, y_train, sample_weight)
-        #print(pd.DataFrame(regr.cv_results_))
-        y_pred_test = regr.best_estimator_.predict(X_test)
-        print('best alpha = ', regr.best_params_)
-
+        regr_model = Ridge()
     elif reg_type == 'Lasso':
-        regr = GridSearchCV(Lasso(), parameters, cv=cvfolds, n_jobs=1, refit=True)
-        regr.fit(X_train, y_train, sample_weight)
-        y_pred_test = regr.best_estimator_.predict(X_test)
-        #print(pd.DataFrame(regr.cv_results_))
-        print('best alpga=', regr.best_params_)
-
-    elif reg_type =='RandomForest':
-        regr = RandomForestRegressor(n_estimators=30)
-        regr.fit(X_train, y_train)
-        y_pred_test = regr.predict(X_test)
+        regr_model = Lasso()
+    elif reg_type == 'ElasticNet':
+        regr_model = ElasticNet()
         
-    elif reg_type == 'PLS':
-        regr = PLSRegression(n_components=2)
-        regr.fit(X_train,  y_train)
-        y_pred_test = regr.predict(X_test)
+    regr = GridSearchCV(regr_model, parameters, cv=cvfolds, n_jobs=n_jobs, refit=True,
+                            scoring='neg_mean_squared_error')
+    regr.fit(X_train, y_train, sample_weight)
+    
+    y_pred_test = regr.best_estimator_.predict(X_test)
+    print('best params = ', regr.best_params_)
 
 
     if coefs is True:
@@ -63,7 +53,7 @@ def Regression(X_train, y_train, X_test, y_test, reg_type='Ridge', coefs=False, 
             return y_pred_test, coef
         
     elif ReturnBestAlpha is True:
-         return y_pred_test, coef, regr.best_params_
+         return y_pred_test, regr.best_params_
     
     else:
         return y_pred_test

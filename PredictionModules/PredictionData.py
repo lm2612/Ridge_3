@@ -194,27 +194,29 @@ class PredictionData():
         self.info = self.info + '\nRegional y'
 
     def predict(self, reg_type='Ridge', cvfolds=2, alpha_list = None, normalize=False, 
-                sample_weight=None, coefs=False):
+                sample_weight=None, coefs=False, n_jobs=1):
         if alpha_list is None:
             alpha_list = np.logspace(-1, 6, 15)
         if coefs:
             y_pred, coef, alpha_params = Regression(self.X_train, self.y_train, self.X_test, self.y_test, 
                                                     reg_type, coefs=True, alpha_list = alpha_list, 
                                                     ReturnBestAlpha=True, cvfolds=cvfolds, normalize=normalize,
-                                                    sample_weight=sample_weight)
+                                                    sample_weight=sample_weight, n_jobs=n_jobs)
             print("Returning coefficients")
             self.coef = coef
             
         else:
             y_pred, alpha_params = Regression(self.X_train, self.y_train, self.X_test, self.y_test, reg_type,
                                           coefs=False, alpha_list = alpha_list, ReturnBestAlpha=True,
-                                          cvfolds=cvfolds, normalize=normalize, sample_weight=sample_weight)
+                                          cvfolds=cvfolds, normalize=normalize, sample_weight=sample_weight,
+                                              n_jobs=n_jobs)
         self.alpha_params = alpha_params
         self.y_pred = y_pred
         self.info = self.info + '\nPrediction done \nParameters: %s'%alpha_params
 
-    def predict_regularise(self, reg_type='Ridge', cvfolds=2, alpha_list=None, normalize=False, sample_weight=None):
-        self.predict(reg_type, cvfolds, alpha_list, normalize=normalize, sample_weight=sample_weight)
+    def predict_regularise(self, reg_type='Ridge', cvfolds=2, alpha_list=None, normalize=False, sample_weight=None, n_jobs=1):
+        """ Repeats regularisation to refine alpha """
+        self.predict(reg_type, cvfolds, alpha_list, normalize=normalize, sample_weight=sample_weight, n_jobs=n_jobs)
         alpha = self.alpha_params['alpha']
         ind = int(list(alpha_list).index(alpha))
         print('index', ind)
@@ -227,12 +229,12 @@ class PredictionData():
             max_a = 10.*alpha
         else:
             max_a = alpha_list[ind+1]
-        new_alpha_list = np.linspace(min_a, max_a, 50)
+        new_alpha_list = np.linspace(min_a, max_a, 10)
         print(new_alpha_list)
         for i in range(10):
-            self.predict(reg_type, cvfolds, new_alpha_list, normalize=normalize)
+            self.predict(reg_type, cvfolds, new_alpha_list, normalize=normalize, n_jobs=n_jobs)
             new_alpha = self.alpha_params['alpha']
-            if np.abs(new_alpha - alpha) < 0.1*alpha:
+            if np.abs(new_alpha - alpha) < 0.1 * alpha:
                 print('Iterations done')
                 break
             ind = int( list(new_alpha_list).index(new_alpha))
@@ -245,7 +247,7 @@ class PredictionData():
                 max_a = 10.*new_alpha
             else:
                 max_a = new_alpha_list[ind+1]
-            new_alpha_list = np.linspace(min_a, max_a, 50)
+            new_alpha_list = np.linspace(min_a, max_a, 10)
             print(new_alpha_list)
         print('final alpha', new_alpha)
 
@@ -383,7 +385,7 @@ class PredictionData():
 
     def run(self, X_type, y_type, reg_type, option, X_regions=None, y_regions = None, nPCA=None, 
             cvfolds=2, alpha_list=None, n_red_lon=None, n_red_lat=None, normalize=False, 
-            repeat_regularise=True, coefs=False,  sample_weight=None):
+            repeat_regularise=True, coefs=False,  sample_weight=None, n_jobs=1):
         self.split_set(option) 
         if X_type == 'PCA':
             self.principal_components_X(nPCA)
@@ -393,11 +395,12 @@ class PredictionData():
         print(self.area_y.shape)
         if repeat_regularise:
             print("Repeat CV regularisation")
-            self.predict_regularise(reg_type, cvfolds, alpha_list, normalize, sample_weight=sample_weight)
+            self.predict_regularise(reg_type, cvfolds, alpha_list, normalize, 
+                                    sample_weight=sample_weight, n_jobs=n_jobs)
         else:
             print("No repeated CV Regularisation")
             print("Return coefs?", coefs)
-            self.predict(reg_type, cvfolds, alpha_list, normalize, coefs=coefs)
+            self.predict(reg_type, cvfolds, alpha_list, normalize, coefs=coefs, n_jobs=n_jobs)
         
         # if necessary,  return to full y output
         if y_type == 'PCA':
