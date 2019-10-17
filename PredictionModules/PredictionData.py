@@ -104,6 +104,16 @@ class PredictionData():
             n_samples = len(names)
             idxs = np.arange(n_samples)
             X_train,  X_test,  y_train,  y_test,  idx_train,  idx_test = train_test_split(X,  y,  idxs,  test_size=0.2,  random_state=random_seed)
+        elif type(option) is list:
+            """ Manually select test data to split for training and testing """
+            assert (type(option) is list),'TestNames should be list'
+            # Check all listed scenarios are in names
+            check = ([TestName in names for TestName in option])
+            assert (all(check)),'All scenarios listed in option must be in names. Check for typo in following: {}'.format(list(np.array(TestNames)[[not i for i in check]]))
+            dx_test = [names.index(TestName) for TestName in option]
+            idx_train = [idx for idx in range(len(names)) if idx not in idx_test]
+            X_train,X_test = X[idx_train],X[idx_test]
+            y_train,y_test = y[idx_train],y[idx_test]
         elif option in names:
             print(option)
             idx_test = names.index(option)

@@ -26,7 +26,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     map.drawcountries(linewidth=0.25)
     
     # draw the edge of the map projection region (the projection limb)
-    map.drawmapboundary(fill_color='lightseagreen')
+    map.drawmapboundary(fill_color='white')
     # draw lat/lon grid lines every 30 degrees.
     map.drawmeridians(np.arange(0,360,30))
     map.drawparallels(np.arange(-90,90,30))
@@ -44,7 +44,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     longrid,latgrid = np.meshgrid(lons,lats)
     
     # Plot map
-    cmap = map.contourf(longrid,latgrid,variable,cmap=cmap,lonlat=True,
+    cmap = map.contourf(longrid,latgrid,variable,cmap=cmap,
                         levels=levels,extend='both')
     if colorbar == 1.0:
         cbar = map.colorbar()

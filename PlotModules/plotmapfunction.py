@@ -11,8 +11,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap,shiftgrid
 
-def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
-            variable_label='',plottitle='',plotaxis=None,colorbar=1.0):
+def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,drawcountries=True,
+            variable_label='',plottitle='',plotaxis=None,colorbar=1.0, labels=True):
     """ Plots a map and displays output or saves to file with path 
     and filename savefile (string). Inputs are lons, lats and the variable
     in format they are outputted from ReadFile (ie from netcdf file). 
@@ -23,10 +23,11 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     map = Basemap()
     # draw coastlines, country boundaries, fill continents.
     map.drawcoastlines(linewidth=0.25)
-    map.drawcountries(linewidth=0.25)
+    if drawcountries:
+        map.drawcountries(linewidth=0.25)
     
     # draw the edge of the map projection region (the projection limb)
-    map.drawmapboundary(fill_color='lightseagreen')
+    map.drawmapboundary(fill_color='white')
     # draw lat/lon grid lines every 30 degrees.
     map.drawmeridians(np.arange(0,360,30))
     map.drawparallels(np.arange(-90,90,30))
@@ -44,16 +45,16 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     longrid,latgrid = np.meshgrid(lons,lats)
     
     # Plot map
-    cmap = map.contourf(longrid,latgrid,variable,cmap=cmap,lonlat=True,
+    cmap = map.contourf(longrid,latgrid,variable,cmap=cmap,
                         levels=levels,extend='both')
     if colorbar == 1.0:
         cbar = map.colorbar()
         cbar.set_label(variable_label)
-    
-    plt.xlabel('Longitude')
-    plt.xticks(np.arange(-180.,185.,90.))
-    plt.yticks(np.arange(-90.,91.,30.))
-    plt.ylabel('Latitude')
+    if labels:
+        plt.xlabel('Longitude')
+        plt.xticks(np.arange(-180.,185.,90.))
+        plt.yticks(np.arange(-90.,91.,30.))
+        plt.ylabel('Latitude')
     plt.title(plottitle)
     plt.tight_layout()
 
