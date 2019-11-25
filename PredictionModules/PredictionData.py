@@ -243,8 +243,9 @@ class PredictionData():
         print(new_alpha_list)
         for i in range(10):
             self.predict(reg_type, cvfolds, new_alpha_list, normalize=normalize, n_jobs=n_jobs)
+            alpha = new_alpha
             new_alpha = self.alpha_params['alpha']
-            if np.abs(new_alpha - alpha) < 0.1 * alpha:
+            if np.abs(new_alpha - alpha) < 1e-3 * alpha:
                 print('Iterations done')
                 break
             ind = int( list(new_alpha_list).index(new_alpha))
@@ -373,8 +374,6 @@ class PredictionData():
             X_red, area_red = self.reduce(self.X, self.area_X, self.lons_X, self.lats_X, n_red_lon, n_red_lat)
             self.X = X_red
             self.area_X = area_red
-       
-        
         elif (X_type  != 'Full') and (X_type!='PCA'):
             print('X_type not chosen correctly')
             exit()
@@ -388,7 +387,6 @@ class PredictionData():
             self.y = y_red
             self.area_y = area_red
             self.area_y_red = area_red
-
         elif (y_type != 'Full') and (y_type != 'PCA'):
             print('y_type not chosen correctly')
             exit()
